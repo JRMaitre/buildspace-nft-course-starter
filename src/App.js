@@ -1,6 +1,10 @@
-import './styles/App.css';
 import React from "react";
-import Connected from './Connected'
+import { ethers } from "ethers";
+
+import myRandomNFT from "./utils/MyRandomNFT.json";
+
+import "./styles/App.css";
+import Connected from "./Connected";
 
 // Constants
 // const OPENSEA_LINK = '';
@@ -8,8 +12,8 @@ import Connected from './Connected'
 
 const checkIfWalletIsConnected = () => {
   /*
-  * First make sure we have access to window.ethereum
-  */
+   * First make sure we have access to window.ethereum
+   */
   const { ethereum } = window;
 
   if (!ethereum) {
@@ -19,17 +23,16 @@ const checkIfWalletIsConnected = () => {
     console.log("We have the ethereum object", ethereum);
     return true;
   }
-}
-
-
+};
 
 const App = () => {
   const [currentAccount, setCurrentAccount] = React.useState("");
-  const isConnected = checkIfWalletIsConnected()
-  const shouldConnectWallet = !isConnected || !currentAccount
+  const [status, setStatus] = React.useState(null);
+  const isConnected = checkIfWalletIsConnected();
+  const shouldConnectWallet = !isConnected || !currentAccount;
   /*
-  * Implement your connectWallet method here
-  */
+   * Implement your connectWallet method here
+   */
   const connectWallet = async () => {
     try {
       const { ethereum } = window;
@@ -40,49 +43,86 @@ const App = () => {
       }
 
       /*
-      * Fancy method to request access to account.
-      */
-      const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+       * Fancy method to request access to account.
+       */
+      const accounts = await ethereum.request({
+        method: "eth_requestAccounts",
+      });
 
       /*
-      * Boom! This should print out public address once we authorize Metamask.
-      */
+       * Boom! This should print out public address once we authorize Metamask.
+       */
       console.log("Connected", accounts[0]);
-      setCurrentAccount(accounts[0]); 
+      setCurrentAccount(accounts[0]);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
+
+  const askContractToMintNft = async () => {
+    const CONTRACT_ADDRESS = "0xbB74C38722DBe4f9F51857FbE9574dac67F38EdD";
+
+    try {
+      const { ethereum } = window;
+
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const connectedContract = new ethers.Contract(
+          CONTRACT_ADDRESS,
+          myRandomNFT.abi,
+          signer
+        );
+
+        setStatus("Going to pop wallet now to pay gas...");
+        console.log("Going to pop wallet now to pay gas...");
+        let nftTxn = await connectedContract.makeARandomNFT();
+
+        setStatus("Mining...please wait.");
+        console.log("Mining...please wait.");
+        await nftTxn.wait();
+
+        setStatus(
+          `Mined, see transaction: https://rinkeby.etherscan.io/tx/${nftTxn.hash}`
+        );
+        console.log(
+          `Mined, see transaction: https://rinkeby.etherscan.io/tx/${nftTxn.hash}`
+        );
+      } else {
+        console.log("Ethereum object doesn't exist!");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const setAccounts = async () => {
-    console.log('set account', isConnected)
     if (!isConnected) {
-      return false
+      return false;
     }
-    console.log('is connected')
+
     const { ethereum } = window;
     /*
-      * Check if we're authorized to access the user's wallet
-      */
-    const accounts = await ethereum.request({ method: 'eth_accounts' });
-    console.log(accounts)
+     * Check if we're authorized to access the user's wallet
+     */
+    const accounts = await ethereum.request({ method: "eth_accounts" });
+
     /*
-    * User can have multiple authorized accounts, we grab the first one if its there!
-    */
+     * User can have multiple authorized accounts, we grab the first one if its there!
+     */
     if (accounts.length !== 0) {
       const account = accounts[0];
-      console.log("Found an authorized account:", account);
-      setCurrentAccount(account)
+
+      setCurrentAccount(account);
     } else {
-      console.log("No authorized account found")
+      console.log("No authorized account found");
     }
-  }
+  };
 
   React.useEffect(() => {
-    console.log('try set account')
-    setAccounts()
-  })
-
+    console.log("try set account");
+    setAccounts();
+  });
 
   return (
     <div className="App">
@@ -92,14 +132,23 @@ const App = () => {
           <p className="sub-text">
             Each unique. Each beautiful. Discover your NFT today.
           </p>
-          {shouldConnectWallet ?
-            <button className="cta-button connect-wallet-button" onClick={connectWallet}>
+          {shouldConnectWallet ? (
+            <button
+              className="cta-button connect-wallet-button"
+              onClick={connectWallet}
+            >
               Connect to Wallet
-            </button> :
-            <Connected accountName={currentAccount} />
-          }
+            </button>
+          ) : (
+            <Connected
+              accountName={currentAccount}
+              onMint={askContractToMintNft}
+              status={status}
+            />
+          )}
         </div>
-        <div className="footer-container"><span>Built by JR Maitre</span>
+        <div className="footer-container">
+          <span>Built by JR Maitre</span>
         </div>
       </div>
     </div>

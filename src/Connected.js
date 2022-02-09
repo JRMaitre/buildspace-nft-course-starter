@@ -1,12 +1,13 @@
-import './styles/App.css';
+import "./styles/App.css";
 import React from "react";
 
-const Connected = ({ accountName }) => {
+const Connected = ({ accountName, onMint, status }) => {
   return (
     <div>
-      {accountName}
+      <div>{accountName}</div>
+      <div>{status}</div>
       <div>
-        <button onClick={null} className="cta-button connect-wallet-button">
+        <button onClick={onMint} className="cta-button connect-wallet-button">
           Mint NFT
         </button>
       </div>
