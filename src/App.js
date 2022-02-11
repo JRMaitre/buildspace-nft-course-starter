@@ -1,5 +1,5 @@
 import React from "react";
-import { ethers } from "ethers";
+import { ethers, BigNumber } from "ethers";
 
 import myRandomNFT from "./utils/MyRandomNFT.json";
 
@@ -10,7 +10,7 @@ import Connected from "./Connected";
 // const OPENSEA_LINK = '';
 // const TOTAL_MINT_COUNT = 50;
 
-const CONTRACT_ADDRESS = "0xF7b703FcAcB4f9221007c26b37CEEf2DB7b7ce3c";
+const CONTRACT_ADDRESS = "0xd256299D645fb777637E9D1A671fb72F654B0230";
 
 const checkIfWalletIsConnected = () => {
   /*
@@ -30,14 +30,60 @@ const checkIfWalletIsConnected = () => {
 const App = () => {
   const [currentAccount, setCurrentAccount] = React.useState("");
   const [status, setStatus] = React.useState(null);
+  const [latestNft, setLatestNft] = React.useState(null);
+  const [stats, setStats] = React.useState({
+    currentTokenId: null,
+    maxTokenId: null,
+    remainingTokens: null,
+  });
   const isConnected = checkIfWalletIsConnected();
   const shouldConnectWallet = !isConnected || !currentAccount;
+
+  // Setup our listener.
+  const setupEventListener = React.useCallback(async () => {
+    // Most of this looks the same as our function askContractToMintNft
+    try {
+      const { ethereum } = window;
+
+      if (ethereum) {
+        // Same stuff again
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const connectedContract = new ethers.Contract(
+          CONTRACT_ADDRESS,
+          myRandomNFT.abi,
+          signer
+        );
+
+        // THIS IS THE MAGIC SAUCE.
+        // This will essentially "capture" our event when our contract throws it.
+        // If you're familiar with webhooks, it's very similar to that!
+        connectedContract.on("NewRandomNFTMinted", async (from, tokenId) => {
+          console.log(from, tokenId.toNumber());
+
+          // Refresh stats...
+          await getNftData();
+
+          setLatestNft(
+            `Hey there! We've minted your NFT. It may be blank right now. It can take a max of 10 min to show up on OpenSea. Here's the link: <https://testnets.opensea.io/assets/${CONTRACT_ADDRESS}/${tokenId.toNumber()}>`
+          );
+        });
+
+        console.log("Setup event listener!");
+      } else {
+        console.log("Ethereum object doesn't exist!");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
 
   React.useEffect(() => {
     if (isConnected) {
       setupEventListener();
+      getNftData();
     }
-  }, [isConnected]);
+  }, [isConnected, setupEventListener]);
   /*
    * Implement your connectWallet method here
    */
@@ -67,7 +113,7 @@ const App = () => {
     }
   };
 
-  const askContractToMintNft = async () => {
+  const getNftData = async () => {
     try {
       const { ethereum } = window;
 
@@ -80,12 +126,38 @@ const App = () => {
           signer
         );
 
-        // connectedContract.on("NewRandomNFTMinted", (from, tokenId) => {
-        //   console.log(from, tokenId.toNumber());
-        //   setStatus(
-        //     `Hey there! We've minted your NFT. It may be blank right now. It can take a max of 10 min to show up on OpenSea. Here's the link: <https://testnets.opensea.io/assets/${CONTRACT_ADDRESS}/${tokenId.toNumber()}>`
-        //   );
-        // });
+        let maxTokenId = await connectedContract.getMaxTokenId();
+        let currentTokenId = await connectedContract.getCurrentTokenId();
+
+        let numberMaxTokenId = BigNumber.from(maxTokenId);
+        let numberCurrentTokenId = BigNumber.from(currentTokenId);
+        let numberRemainingTokens = numberMaxTokenId.sub(numberCurrentTokenId);
+
+        setStats({
+          currentTokenId: numberCurrentTokenId.toString(),
+          maxTokenId: numberMaxTokenId.toString(),
+          remainingTokens: numberRemainingTokens.toString(),
+        });
+      } else {
+        console.log("Ethereum object doesn't exist!");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const askContractToMintNft = async () => {
+    try {
+      const { ethereum } = window;
+
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const connectedContract = new ethers.Contract(
+          CONTRACT_ADDRESS,
+          myRandomNFT.abi,
+          signer
+        );
 
         setStatus("Going to pop wallet now to pay gas...");
         console.log("Going to pop wallet now to pay gas...");
@@ -132,41 +204,6 @@ const App = () => {
     }
   };
 
-  // Setup our listener.
-  const setupEventListener = async () => {
-    // Most of this looks the same as our function askContractToMintNft
-    try {
-      const { ethereum } = window;
-
-      if (ethereum) {
-        // Same stuff again
-        const provider = new ethers.providers.Web3Provider(ethereum);
-        const signer = provider.getSigner();
-        const connectedContract = new ethers.Contract(
-          CONTRACT_ADDRESS,
-          myRandomNFT.abi,
-          signer
-        );
-
-        // THIS IS THE MAGIC SAUCE.
-        // This will essentially "capture" our event when our contract throws it.
-        // If you're familiar with webhooks, it's very similar to that!
-        connectedContract.on("NewRandomNFTMinted", (from, tokenId) => {
-          console.log(from, tokenId.toNumber());
-          setStatus(
-            `Hey there! We've minted your NFT. It may be blank right now. It can take a max of 10 min to show up on OpenSea. Here's the link: <https://testnets.opensea.io/assets/${CONTRACT_ADDRESS}/${tokenId.toNumber()}>`
-          );
-        });
-
-        console.log("Setup event listener!");
-      } else {
-        console.log("Ethereum object doesn't exist!");
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   React.useEffect(() => {
     console.log("try set account");
     setAccounts();
@@ -192,6 +229,8 @@ const App = () => {
               accountName={currentAccount}
               onMint={askContractToMintNft}
               status={status}
+              latestNft={latestNft}
+              stats={stats}
             />
           )}
         </div>

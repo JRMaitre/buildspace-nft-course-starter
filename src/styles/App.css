@@ -124,3 +124,7 @@
     background-position: 0% 50%;
   }
 }
+
+div.padded-div {
+  padding: 16px;
+}
