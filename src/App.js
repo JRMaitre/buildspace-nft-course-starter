@@ -10,7 +10,7 @@ import Connected from "./Connected";
 // const OPENSEA_LINK = '';
 // const TOTAL_MINT_COUNT = 50;
 
-const CONTRACT_ADDRESS = "0xd256299D645fb777637E9D1A671fb72F654B0230";
+const CONTRACT_ADDRESS = "0xAa08E23A8671Fd524462B978068b00E774Cb4Cdd";
 
 const checkIfWalletIsConnected = () => {
   /*
@@ -27,18 +27,38 @@ const checkIfWalletIsConnected = () => {
   }
 };
 
+const isValidNetwork = async () => {
+  /*
+   * First make sure we have access to window.ethereum
+   */
+  const { ethereum } = window;
+
+  let chainId = await ethereum.request({ method: "eth_chainId" });
+  console.log("Connected to chain " + chainId);
+
+  // String, hex code of the chainId of the Rinkebey test network
+  const rinkebyChainId = "0x4";
+  if (chainId !== rinkebyChainId) {
+    return false;
+  }
+  return true;
+};
+
 const App = () => {
   const [currentAccount, setCurrentAccount] = React.useState("");
   const [status, setStatus] = React.useState(null);
   const [latestNft, setLatestNft] = React.useState(null);
+  const [isOnValidNetwork, setIsOnValidNetwork] = React.useState(null);
   const [stats, setStats] = React.useState({
     currentTokenId: null,
     maxTokenId: null,
     remainingTokens: null,
   });
   const isConnected = checkIfWalletIsConnected();
+
   const shouldConnectWallet = !isConnected || !currentAccount;
 
+  const isLoading = isOnValidNetwork === null;
   // Setup our listener.
   const setupEventListener = React.useCallback(async () => {
     // Most of this looks the same as our function askContractToMintNft
@@ -209,6 +229,19 @@ const App = () => {
     setAccounts();
   });
 
+  React.useEffect(() => {
+    const fetchData = async () => {
+      const isValid = await isValidNetwork();
+      setIsOnValidNetwork(isValid);
+    };
+
+    fetchData();
+  });
+
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <div className="App">
       <div className="container">
@@ -224,7 +257,7 @@ const App = () => {
             >
               Connect to Wallet
             </button>
-          ) : (
+          ) : isOnValidNetwork ? (
             <Connected
               accountName={currentAccount}
               onMint={askContractToMintNft}
@@ -232,6 +265,8 @@ const App = () => {
               latestNft={latestNft}
               stats={stats}
             />
+          ) : (
+            <div>You are not on a valid network</div>
           )}
         </div>
         <div className="footer-container">
