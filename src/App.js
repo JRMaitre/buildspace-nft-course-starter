@@ -7,7 +7,8 @@ import "./styles/App.css";
 import Connected from "./Connected";
 
 // Constants
-// const OPENSEA_LINK = '';
+const OPENSEA_LINK =
+  "https://testnets.opensea.io/collection/squarenft-ub3ggwfv0j";
 // const TOTAL_MINT_COUNT = 50;
 
 const CONTRACT_ADDRESS = "0x543695057E693078E7f1795833a6bc954f46997f";
@@ -272,7 +273,10 @@ const App = () => {
         </div>
         <div className="footer-container">
           <span>
-            View collection on <a href="https://www.google.com">Opensea</a>
+            View collection on{" "}
+            <a href={OPENSEA_LINK} target="_blank" rel="noreferrer">
+              Opensea
+            </a>
           </span>
         </div>
         <div className="footer-container">

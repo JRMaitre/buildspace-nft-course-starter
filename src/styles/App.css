@@ -1,6 +1,6 @@
 .App {
   height: 100vh;
-  background-color: #0d1116;
+  background-color: #3a4149;
   overflow: scroll;
   text-align: center;
   color: white;
@@ -8,10 +8,18 @@
 
 .container {
   height: 100%;
-  background-color: #0d1116;
+  background-color: #3a4149;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+a {
+  color: #60c657;
+}
+
+a:visited {
+  color: #53b7e2;
 }
 
 .header-container {
