@@ -10,7 +10,7 @@ import Connected from "./Connected";
 // const OPENSEA_LINK = '';
 // const TOTAL_MINT_COUNT = 50;
 
-const CONTRACT_ADDRESS = "0xAa08E23A8671Fd524462B978068b00E774Cb4Cdd";
+const CONTRACT_ADDRESS = "0x543695057E693078E7f1795833a6bc954f46997f";
 
 const checkIfWalletIsConnected = () => {
   /*
@@ -246,9 +246,10 @@ const App = () => {
     <div className="App">
       <div className="container">
         <div className="header-container">
-          <p className="header gradient-text">My NFT Collection</p>
+          <p className="header gradient-text">NFT Ligue 1</p>
+          <p className="sub-text">1 Defender, 1 Midfield, 1 Forward...</p>
           <p className="sub-text">
-            Each unique. Each beautiful. Discover your NFT today.
+            Will you be one of the lucky one to mint Messi?
           </p>
           {shouldConnectWallet ? (
             <button
@@ -268,6 +269,11 @@ const App = () => {
           ) : (
             <div>You are not on a valid network</div>
           )}
+        </div>
+        <div className="footer-container">
+          <span>
+            View collection on <a href="https://www.google.com">Opensea</a>
+          </span>
         </div>
         <div className="footer-container">
           <span>Built by JR Maitre</span>
